@@ -42,6 +42,7 @@ namespace RFID
         public static string gdtt = "";
         public static string sfull = "";
         public static bool zdt = false;
+        public static bool detail = false;
         public static string cmess = "";
         public static string dp = "10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28";
         //public static TcpClient client = null;
@@ -96,7 +97,8 @@ namespace RFID
         {
             TcpClient client = null;
 
-            Logger.Log.Info("Sender adr  -> " + adr);
+            if (detail)
+                Logger.Log.Info("Sender adr  -> " + adr);
 
             client = new TcpClient(adr, port80);
             NetworkStream stream = client.GetStream();
@@ -124,7 +126,7 @@ namespace RFID
             {
                 string date = "";
                 string time = "";
-                string dt = DateTime.Now.ToString();
+                string dt = DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss");
                 date = "da" + dt.Substring(0, 10);
                 time = "ti" + dt.Substring(11, 8);
 
@@ -159,13 +161,36 @@ namespace RFID
                 Logger.Log.Info("Comm with UCM2324A   Version 1.051 ( 2 thread / Sync time / Auto Id)");
                 Logger.Log.Info("__________________________________");
                 Logger.Log.Info("");
-                Logger.Log.Info("System Date/Time -> " + DateTime.Now.ToString());
+                Logger.Log.Info("System Date/Time -> " + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
                 Logger.Log.Info("");
                 Logger.Log.Info("Opening connection to DB step #1");
 
-
-
-                String ConSQL = "Data Source=KRR-APP-PACNT09\\SQLEXPRESS;Initial Catalog=kovsh_trafic;Integrated Security=True";
+                
+                detail = bool.Parse(ConfigurationManager.AppSettings["detail"].ToString());
+                port = Convert.ToInt16(ConfigurationManager.AppSettings["port"]);
+                port80 = Convert.ToInt16(ConfigurationManager.AppSettings["port80"]);
+                String ConSQL = ConfigurationManager.AppSettings["cs"];
+                ip[0] = ConfigurationManager.AppSettings["ip1"];
+                ip[1] = ConfigurationManager.AppSettings["ip2"];
+                ip[2] = ConfigurationManager.AppSettings["ip3"];
+                ip[3] = ConfigurationManager.AppSettings["ip4"];
+                ip[4] = ConfigurationManager.AppSettings["ip5"];
+                ip[5] = ConfigurationManager.AppSettings["ip6"];
+                ip[6] = ConfigurationManager.AppSettings["ip7"];
+                ip[7] = ConfigurationManager.AppSettings["ip8"];
+                ip[8] = ConfigurationManager.AppSettings["ip9"];
+                ip[9] = ConfigurationManager.AppSettings["ip10"];
+                ip[10] = ConfigurationManager.AppSettings["ip11"];
+                ip[11] = ConfigurationManager.AppSettings["ip12"];
+                ip[12] = ConfigurationManager.AppSettings["ip13"];
+                ip[13] = ConfigurationManager.AppSettings["ip14"];
+                ip[14] = ConfigurationManager.AppSettings["ip15"];
+                ip[15] = ConfigurationManager.AppSettings["ip16"];
+                ip[16] = ConfigurationManager.AppSettings["ip17"];
+                ip[17] = ConfigurationManager.AppSettings["ip18"];
+                ip[18] = ConfigurationManager.AppSettings["ip19"];
+                Logger.Log.Info("ConSQL = " + ConSQL);
+                //String ConSQL = "Data Source=KRR-APP-PACNT09\\SQLEXPRESS;Initial Catalog=kovsh_trafic;Integrated Security=True";
                 Connection = new SqlConnection( ConSQL );
                 //Connection = new SqlConnection("Data Source=DMITRY\\SQLEXPRESS;Initial Catalog=kovsh_trafic;Integrated Security=True");
                 //Connection = new SqlConnection("Data Source=ADMIN-ПК\\SQLEXPRESS;Initial Catalog=kovsh_trafic;Integrated Security=True");
@@ -197,7 +222,9 @@ namespace RFID
                     Listener = new TcpListener(LocalPort);
                     Listener.Start(); // начали слушать
 
-                    Logger.Log.Info("Waiting connections [" + Convert.ToString(LocalPort) + "]...");
+                    if ( detail )
+                       Logger.Log.Info("Waiting connections [" + Convert.ToString(LocalPort) + "]...");
+
                     try
                     {
                         ClientSock = Listener.AcceptSocket(); // пробуем принять 
@@ -226,8 +253,11 @@ namespace RFID
                         string MYIpClient;
                         MYIpClient = Convert.ToString(((System.Net.IPEndPoint)ClientSock.RemoteEndPoint).Address);
 
-                        Logger.Log.Info("We recieving , connection from IP : " + MYIpClient);
-                        Logger.Log.Info("Data recieving length = " + i.ToString());
+                        if (detail)
+                        {
+                            Logger.Log.Info("We recieving , connection from IP : " + MYIpClient);
+                            Logger.Log.Info("Data recieving length = " + i.ToString());
+                        }
 
                         try
                         {
@@ -236,12 +266,16 @@ namespace RFID
 
                                 data = Encoding.ASCII.GetString(cldata).Trim();
                                 sfull = data;
-                                Logger.Log.Info("RePost OK..");
-                                Logger.Log.Info("");
-                                Logger.Log.Info("___________________________");
-                                Logger.Log.Info("Recieving string -> " + data);
-                                Logger.Log.Info("___________________________");
-                                Logger.Log.Info("");
+
+                                if (detail)
+                                {
+                                    Logger.Log.Info("RePost OK..");
+                                    Logger.Log.Info("");
+                                    Logger.Log.Info("___________________________");
+                                    Logger.Log.Info("Recieving string -> " + data);
+                                    Logger.Log.Info("___________________________");
+                                    Logger.Log.Info("");
+                                }
 
                                 try
                                 {
@@ -266,11 +300,11 @@ namespace RFID
                                     if (p3 >= 0 || p2 >= 0)
                                         data = data.Substring(p + 1, p3);
 
-                                    Logger.Log.Info("variable P = " + p.ToString());
-                                    Logger.Log.Info("variable P1 = " + p1.ToString());
-                                    Logger.Log.Info("variable ADR = " + adr);
+                                    //Logger.Log.Info("variable P = " + p.ToString());
+                                    //Logger.Log.Info("variable P1 = " + p1.ToString());
+                                    //Logger.Log.Info("variable ADR = " + adr);
+                                    //Logger.Log.Info("Start index -> " + data.IndexOf("start").ToString());
 
-                                    Logger.Log.Info("Start index -> " + data.IndexOf("start").ToString());
                                     if (data.IndexOf("start") >= 0 || zdt || data.IndexOf("sync") >= 0)
                                     {
 
@@ -282,7 +316,7 @@ namespace RFID
                                             zdt = false;
                                         }
                                         rfs = true;
-                                        String ns = DateTime.Now.ToString();
+                                        String ns = DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss");
                                         ns = ns.Replace(":", "_");
                                         ns = ns.Replace(".", "_");
                                         ns = ns.Replace(" ", "_");
@@ -292,7 +326,7 @@ namespace RFID
 
                                         string date = "";
                                         string time = "";
-                                        string dt = DateTime.Now.ToString();
+                                        string dt = DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss");
                                         date = "da" + dt.Substring(0, 10);
                                         time = "ti" + dt.Substring(11, 8);
 
@@ -326,9 +360,10 @@ namespace RFID
 
                                     if (p2 >= 0)
                                     {
-                                        Logger.Log.Info("____________________________ S Q L ___________________________________");
+                                        if (detail)
+                                            Logger.Log.Info("____________________________ S Q L - ALARM ___________________________________");
 
-                                        news = dtt + "' , '" + point.ToString() + "' , '" + dir.ToString() + "' , '" + rf.ToString() + "' , '" + DateTime.Now.ToString();
+                                        news = dtt + "' , '" + point.ToString() + "' , '" + dir.ToString() + "' , '" + rf.ToString() + "' , '" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss");
 
                                         SqlCommand myCommand = new SqlCommand("INSERT INTO [kovsh_trafic].[dbo].[alarm] (dt,point,alarm,datchik,sdt) " +
                                                                                  "Values ('" + news + "')", Connection);
@@ -341,10 +376,12 @@ namespace RFID
 
                                         string ff = "INSERT INTO [kovsh_trafic].[dbo].[trafic] (id,dt,point,alarm,datchik) " +
                                                                                  "Values ('" + news + "')";
-                                        Logger.Log.Info("SQL -> " + ff);
+                                        if (detail)
+                                            Logger.Log.Info("SQL -> " + ff);
 
                                         //System.IO.File.WriteAllText("C:\\rfid_data\\" + data.Substring(0, 9) + ".txt", data);
-                                        Logger.Log.Info("CREATE FILE -> " + "C:\\rfid_data\\" + data.Substring(0, 9) + ".txt");
+                                        //Logger.Log.Info("CREATE FILE -> " + "C:\\rfid_data\\" + data.Substring(0, 9) + ".txt");
+
                                         sender(adr, "OK");
                                         //sender("192.168.2.199", "OK");
 
@@ -357,11 +394,11 @@ namespace RFID
 
                                     if (p1 >= 0 && p >= 0)
                                     {
-
-                                        Logger.Log.Info("____________________________ S Q L ___________________________________");
+                                        if (detail)
+                                            Logger.Log.Info("____________________________ S Q L - TRAFFIC___________________________________");
 
                                         news = dtt + "' , '" + tag.ToString() + "' , '" + rf.ToString() +
-                                               "' , '" + point.ToString() + "' , '" + dir.ToString() + "' , '" + DateTime.Now.ToString();
+                                               "' , '" + point.ToString() + "' , '" + dir.ToString() + "' , '" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss");
 
                                         gnews = news;
 
@@ -377,22 +414,24 @@ namespace RFID
 
                                         string ff = "INSERT INTO [kovsh_trafic].[dbo].[trafic] (id,dt,tag,rf,point,dir) " +
                                                                                  "Values ('" + news + "')";
-                                        Logger.Log.Info("SQL -> " + ff);
-                                        Logger.Log.Info("data  -> " + data);
-                                        Logger.Log.Info("END");
+                                        if (detail)
+                                            Logger.Log.Info("SQL -> " + ff);
+
+                                        //Logger.Log.Info("data  -> " + data);
+                                        //Logger.Log.Info("END");
                                         //data = data.Substring(14, (p1 + 4) - 13); 
 
-                                        if (point == 11 && rf == 2)
-                                        {
-                                            //System.IO.File.WriteAllText("C:\\rfid_dataDP6\\" + loid.ToString() + "_" + tag.ToString() + ".txt", sfull);
-                                            loid++;
-                                            if (loid > 30000)
-                                                loid = 1;
-                                        }
-                                        else
-                                        {
-                                            //System.IO.File.WriteAllText("C:\\rfid_data\\" + data.Substring(0, 11) + "_" + res + ".txt", data);
-                                        }
+                                        //if (point == 11 && rf == 2)
+                                        //{
+                                        //    //System.IO.File.WriteAllText("C:\\rfid_dataDP6\\" + loid.ToString() + "_" + tag.ToString() + ".txt", sfull);
+                                        //    loid++;
+                                        //    if (loid > 30000)
+                                        //        loid = 1;
+                                        //}
+                                        //else
+                                        //{
+                                        //    //System.IO.File.WriteAllText("C:\\rfid_data\\" + data.Substring(0, 11) + "_" + res + ".txt", data);
+                                        //}
 
                                         string temp = "";
                                         tp = data.IndexOf("=") + 4;
@@ -400,17 +439,17 @@ namespace RFID
                                         int eee = data.Length;
                                         if (p3 >= 0)
                                             temp = data.Substring(tp, (p3 - tp) - 1);
-                                        Logger.Log.Info("TEMPERATURE = " + temp + "  C");
+                                        //Logger.Log.Info("TEMPERATURE = " + temp + "  C");
 
-                                        if (point == 23 && rf == 2)
-                                        {
-                                            Logger.Log.Info("CREATE FILE -> " + "C:\\rfid_dataDP6\\" + loid.ToString() + "_" + tag.ToString() + ".txt");
+                                        //if (point == 23 && rf == 2)
+                                        //{
+                                        //    Logger.Log.Info("CREATE FILE -> " + "C:\\rfid_dataDP6\\" + loid.ToString() + "_" + tag.ToString() + ".txt");
 
-                                        }
-                                        else
-                                        {
-                                            Logger.Log.Info("CREATE FILE -> " + "C:\\rfid_data\\" + data.Substring(0, 11) + ".txt");
-                                        }
+                                        //}
+                                        //else
+                                        //{
+                                        //    Logger.Log.Info("CREATE FILE -> " + "C:\\rfid_data\\" + data.Substring(0, 11) + ".txt");
+                                        //}
 
                                         sender(adr, "OK");
 
@@ -419,10 +458,10 @@ namespace RFID
                                         data = data.Substring(p, data.Length - (p + 1));
 
                                     SKIP1:
-                                    Logger.Log.Info("for control data -> " + data);
+                                    //Logger.Log.Info("for control data -> " + data);
 
-                                    Logger.Log.Info(">  " + data);
-                                    Logger.Log.Info("Sending OK.." + "    data.lenght = " + data.Length + "   name = " + "C:\\rfid_data\\" + data.Substring(0, 11) + ".txt");
+                                    //Logger.Log.Info(">  " + data);
+                                    //Logger.Log.Info("Sending OK.." + "    data.lenght = " + data.Length + "   name = " + "C:\\rfid_data\\" + data.Substring(0, 11) + ".txt");
 
                                     r_tag = false;
                                     rfs = false;
@@ -432,11 +471,12 @@ namespace RFID
                                 {
 
                                     String sss = ex.ToString();
-                                    Logger.Log.Info("SKIP1 -> " + sss);
+                                    if (detail)
+                                        Logger.Log.Info("SKIP1 -> " + sss);
                                     int y = 1;
                                     //gnews = "Point = " + gpoint + "  RF = " + grf + "  Tag = " + gtag + "  Date/Time = " + gdtt;
                                     //System.IO.File.WriteAllText("C:\\rfid_bad_data\\" + count.ToString() + "_" + grf.ToString() + "_" + gtag.ToString() + ".txt", "IP : " + gadr + "Data recieving : " + gnews + "   Exception : " + sss);
-                                    Logger.Log.Info(" CREATE FILE with BAD data-> " + count.ToString() + "_" + grf.ToString() + "_" + gtag.ToString() + ".txt");
+                                    //Logger.Log.Info(" CREATE FILE with BAD data-> " + count.ToString() + "_" + grf.ToString() + "_" + gtag.ToString() + ".txt");
                                     sender(gadr, "OK");
                                     //Console.ReadKey();
                                 }
@@ -447,7 +487,7 @@ namespace RFID
                         {
                             ClientSock.Close();
                             Listener.Stop();
-                            Logger.Log.Info("Server closing. Reason: client offline. Type EXIT to quit the application.");
+                            Logger.Log.Info("Server closing. Reason: client offline");
                         }
 
                     }
@@ -554,7 +594,7 @@ namespace RFID
                                 cmess = "";
                                 zdt = false;
 
-                                String ns = DateTime.Now.ToString();
+                                String ns = DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss");
                                 ns = ns.Replace(":", "_");
                                 ns = ns.Replace(".", "_");
                                 ns = ns.Replace(" ", "_");
@@ -562,7 +602,7 @@ namespace RFID
 
                                 string date = "";
                                 string time = "";
-                                string dt = DateTime.Now.ToString();
+                                string dt = DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss");
                                 date = "da" + dt.Substring(0, 10);
                                 time = "ti" + dt.Substring(11, 8);
                                 Logger.Log.Info("Sinhronized Date/Time");
